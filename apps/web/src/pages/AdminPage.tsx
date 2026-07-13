@@ -71,8 +71,8 @@ export function AdminPage() {
   const updateProductMutation = useUpdateAdminProduct();
   const deleteProductMutation = useDeleteAdminProduct();
 
-  const [loginUsername, setLoginUsername] = useState('admin');
-  const [loginPassword, setLoginPassword] = useState('admin123');
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [categoryName, setCategoryName] = useState('');
   const [categorySlug, setCategorySlug] = useState('');
   const [editingCategoryId, setEditingCategoryId] = useState('');
