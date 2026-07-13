@@ -9,6 +9,7 @@ const categorySchema = z.object({
 });
 
 const productVariantSchema = z.object({
+  id: z.string().uuid().optional(),
   size: z.string().min(1),
   color: z.string().min(1),
   sku: z.string().optional().nullable(),

@@ -115,6 +115,12 @@ export function AdminProductForm({
 
   return (
     <form className="product-form stack-form" onSubmit={handleSubmit}>
+      {editing && (
+        <div className="edit-mode-banner">
+          <span>Você está editando o produto: <strong>{values.name}</strong></span>
+          <button type="button" className="ghost-button" onClick={onReset}>Cancelar edição</button>
+        </div>
+      )}
       <section className="form-section">
         <div className="form-section-header">
           <h3>Informações básicas</h3>
@@ -195,7 +201,25 @@ export function AdminProductForm({
           {values.variants.map((variant, index) => (
             <article className="repeatable-card" key={`variant-${index}`}>
               <div className="repeatable-card-header">
-                <strong>Variante {index + 1}</strong>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <strong>Variante {index + 1}</strong>
+                  {variant.id && (
+                    <span 
+                      style={{ 
+                        fontSize: '0.72rem', 
+                        color: 'var(--muted)', 
+                        background: 'rgba(255, 255, 255, 0.06)', 
+                        padding: '2px 6px', 
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        userSelect: 'all'
+                      }}
+                      title="Clique duas vezes para selecionar e copiar o ID"
+                    >
+                      ID: {variant.id}
+                    </span>
+                  )}
+                </div>
                 <button type="button" className="ghost-button" onClick={() => removeVariant(index)}>
                   Remover
                 </button>
@@ -328,12 +352,20 @@ export function AdminProductForm({
                   </label>
 
                   <label className="form-field">
-                    <span>ID da variante (opcional)</span>
-                    <input
-                      placeholder="Vincule a uma cor específica"
+                    <span>Vincular a variante (opcional)</span>
+                    <select
                       value={image.variantId ?? ''}
                       onChange={(event) => updateImage(index, { variantId: event.target.value || null })}
-                    />
+                    >
+                      <option value="">Todas as variantes (padrão)</option>
+                      {values.variants
+                        .filter((v) => v.size || v.color)
+                        .map((v, vIndex) => (
+                          <option key={v.id || `v-${vIndex}`} value={v.id ?? ''} disabled={!v.id}>
+                            {v.size || 'Sem tamanho'} - {v.color || 'Sem cor'} {v.id ? `(ID: ${v.id.substring(0, 8)}...)` : '(Salve o produto primeiro para vincular)'}
+                          </option>
+                        ))}
+                    </select>
                   </label>
                 </div>
               </div>

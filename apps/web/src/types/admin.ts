@@ -6,6 +6,7 @@ export interface AdminCategoryDTO {
 }
 
 export interface AdminProductVariantInput {
+  id?: string;
   size: string;
   color: string;
   sku: string | null;

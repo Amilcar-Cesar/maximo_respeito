@@ -6,8 +6,12 @@ import { AdminPage } from './pages/AdminPage';
 import { HomePage } from './pages/HomePage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { ProductPage } from './pages/ProductPage';
+import { useCart } from './hooks/useCart';
 
 function Shell({ children }: { children: React.ReactNode }) {
+  const { data: cart } = useCart();
+  const totalItems = cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -19,8 +23,25 @@ function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </Link>
         <nav className="nav-links">
-          <Link to="/catalogo">Catálogo</Link>
-          <Link to="/carrinho">Carrinho</Link>
+          <a
+            href="/#categorias"
+            onClick={(e) => {
+              if (window.location.pathname === '/') {
+                e.preventDefault();
+                const element = document.getElementById('categorias');
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth' });
+                  window.location.hash = '#categorias';
+                }
+              }
+            }}
+          >
+            Categorias
+          </a>
+          <Link to="/carrinho">
+            Carrinho
+            {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
+          </Link>
           <Link to="/checkout">Checkout</Link>
           <Link to="/admin">Login</Link>
         </nav>
@@ -35,7 +56,7 @@ export function App() {
     <Shell>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/catalogo" element={<CatalogPage />} />
+        <Route path="/catalogo" element={<HomePage />} />
         <Route path="/produto/:id" element={<ProductPage />} />
         <Route path="/carrinho" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
@@ -45,3 +66,4 @@ export function App() {
     </Shell>
   );
 }
+

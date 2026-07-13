@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useCart, useRemoveCartItem, useUpdateCartItem } from '../hooks/useCart';
+import { FlowStepper } from '../components/FlowStepper';
 
 export function CartPage() {
   const cartQuery = useCart();
@@ -14,52 +15,56 @@ export function CartPage() {
 
   return (
     <main className="page-shell">
-      <section className="surface-card cart-layout">
-        <div className="section-heading">
-          <h1>Carrinho</h1>
-          <span>{cart?.items.length ?? 0} itens</span>
-        </div>
+      <FlowStepper currentStep="cart" />
 
-        {!cart?.items.length ? (
-          <div className="empty-state">
-            <h2>Seu carrinho está vazio.</h2>
-            <p>Escolha um produto no catálogo para começar o checkout.</p>
-            <Link className="primary-button" to="/catalogo">Ir para o catálogo</Link>
+      <section className="surface-card cart-layout">
+        <div>
+          <div className="section-heading">
+            <h1>Carrinho</h1>
+            <span>{cart?.items.length ?? 0} itens</span>
           </div>
-        ) : (
-          <div className="cart-list">
-            {cart.items.map((item) => (
-              <article className="cart-item" key={item.id}>
-                <div className="cart-item-media">
-                  {item.imageUrl ? <img src={item.imageUrl} alt={item.productName} /> : <div className="image-placeholder" />}
-                </div>
-                <div className="cart-item-copy">
-                  <h2>{item.productName}</h2>
-                  <p>{item.size} · {item.color}</p>
-                  <strong>R$ {Number(item.unitPrice).toFixed(2)}</strong>
-                </div>
-                <div className="cart-item-actions">
-                  <button
-                    type="button"
-                    onClick={() => updateMutation.mutate({ itemId: item.id, quantity: Math.max(1, item.quantity - 1) })}
-                  >
-                    -
-                  </button>
-                  <span>{item.quantity}</span>
-                  <button
-                    type="button"
-                    onClick={() => updateMutation.mutate({ itemId: item.id, quantity: item.quantity + 1 })}
-                  >
-                    +
-                  </button>
-                  <button type="button" className="ghost-button" onClick={() => removeMutation.mutate(item.id)}>
-                    Remover
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
+
+          {!cart?.items.length ? (
+            <div className="empty-state">
+              <h2>Seu carrinho está vazio.</h2>
+              <p>Escolha um produto no catálogo para começar o checkout.</p>
+              <Link className="primary-button" to="/catalogo">Ir para o catálogo</Link>
+            </div>
+          ) : (
+            <div className="cart-list">
+              {cart.items.map((item) => (
+                <article className="cart-item" key={item.id}>
+                  <div className="cart-item-media">
+                    {item.imageUrl ? <img src={item.imageUrl} alt={item.productName} /> : <div className="image-placeholder" />}
+                  </div>
+                  <div className="cart-item-copy">
+                    <h2>{item.productName}</h2>
+                    <p>{item.size} · {item.color}</p>
+                    <strong>R$ {Number(item.unitPrice).toFixed(2)}</strong>
+                  </div>
+                  <div className="cart-item-actions">
+                    <button
+                      type="button"
+                      onClick={() => updateMutation.mutate({ itemId: item.id, quantity: Math.max(1, item.quantity - 1) })}
+                    >
+                      -
+                    </button>
+                    <span>{item.quantity}</span>
+                    <button
+                      type="button"
+                      onClick={() => updateMutation.mutate({ itemId: item.id, quantity: item.quantity + 1 })}
+                    >
+                      +
+                    </button>
+                    <button type="button" className="ghost-button" onClick={() => removeMutation.mutate(item.id)}>
+                      Remover
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
 
         <aside className="cart-summary">
           <h2>Resumo</h2>

@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { supabase } from '../../config/supabase.js';
 import type {
   AdminCategoryDTO,
@@ -19,7 +20,7 @@ const productAdminSelect = `
   created_at,
   updated_at,
   categories (name),
-  product_variants (size, color, sku, price_override, stock, is_active),
+  product_variants (id, size, color, sku, price_override, stock, is_active),
   product_images (image_url, position, variant_id)
 `;
 
@@ -49,6 +50,7 @@ function mapProduct(product: ProductWithCategoryName): AdminProductDTO {
     createdAt: product.created_at,
     updatedAt: product.updated_at,
     variants: variants.map((variant: ProductVariantRow) => ({
+      id: variant.id,
       size: variant.size,
       color: variant.color,
       sku: variant.sku,
@@ -177,9 +179,69 @@ export class AdminRepository {
       images: AdminProductImageInput[];
     }
   ): Promise<AdminProductDTO> {
-    const deleteVariants = await supabase.from('product_variants').delete().eq('product_id', id);
-    throwOnError(deleteVariants.error, 'Failed to delete product variants');
+    // 1. Fetch existing variants for this product to map size/color to variant ID
+    const { data: existingVariants, error: fetchErr } = await supabase
+      .from('product_variants')
+      .select('id, size, color')
+      .eq('product_id', id);
 
+    if (fetchErr) {
+      throwOnError(fetchErr, 'Failed to fetch existing product variants');
+    }
+
+    const dbVariants = existingVariants || [];
+    const getKey = (size: string, color: string) => `${size.trim().toLowerCase()}_${color.trim().toLowerCase()}`;
+    const dbVariantMap = new Map(dbVariants.map((v) => [getKey(v.size, v.color), v]));
+
+    // Determine which ones to remove (exists in DB, but not in input)
+    const inputKeys = new Set(input.variants.map((v) => getKey(v.size, v.color)));
+    const variantsToRemove = dbVariants.filter((v) => !inputKeys.has(getKey(v.size, v.color)));
+
+    // 2. Delete or soft-delete removed variants
+    for (const variant of variantsToRemove) {
+      const { error: deleteErr } = await supabase
+        .from('product_variants')
+        .delete()
+        .eq('id', variant.id);
+
+      if (deleteErr) {
+        // If delete fails (due to referential integrity), soft delete instead
+        const { error: updateErr } = await supabase
+          .from('product_variants')
+          .update({ is_active: false })
+          .eq('id', variant.id);
+        
+        throwOnError(updateErr, 'Failed to soft delete variant');
+      }
+    }
+
+    // 3. Upsert incoming variants
+    if (input.variants.length > 0) {
+      const upsertPayload = input.variants.map((variant) => {
+        const key = getKey(variant.size, variant.color);
+        const existing = dbVariantMap.get(key);
+        const row = {
+          id: variant.id || existing?.id || randomUUID(),
+          product_id: id,
+          size: variant.size,
+          color: variant.color,
+          sku: variant.sku ?? null,
+          price_override: variant.priceOverride ?? null,
+          stock: variant.stock,
+          is_active: variant.isActive ?? true
+        };
+
+        return row;
+      });
+
+      const variantsResult = await supabase
+        .from('product_variants')
+        .upsert(upsertPayload, { onConflict: 'product_id, size, color' });
+
+      throwOnError(variantsResult.error, 'Failed to update product variants');
+    }
+
+    // 4. Update product images (recreation is fine since they aren't referenced by restrict tables)
     const deleteImages = await supabase.from('product_images').delete().eq('product_id', id);
     throwOnError(deleteImages.error, 'Failed to delete product images');
 
@@ -197,22 +259,6 @@ export class AdminRepository {
       .single();
 
     assertNoError(updateResult, 'Failed to update product');
-
-    if (input.variants.length > 0) {
-      const variantsResult = await supabase.from('product_variants').insert(
-        input.variants.map((variant) => ({
-          product_id: id,
-          size: variant.size,
-          color: variant.color,
-          sku: variant.sku ?? null,
-          price_override: variant.priceOverride ?? null,
-          stock: variant.stock,
-          is_active: variant.isActive ?? true
-        }))
-      );
-
-      throwOnError(variantsResult.error, 'Failed to update product variants');
-    }
 
     if (input.images.length > 0) {
       const imagesResult = await supabase.from('product_images').insert(

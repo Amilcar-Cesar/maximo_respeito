@@ -1,13 +1,27 @@
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
 import dotenv from 'dotenv';
 import { z } from 'zod';
 
 const isNetlifyRuntime = Boolean(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
 
 if (!isNetlifyRuntime) {
-  const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
-  dotenv.config({ path: path.join(rootDir, '.env') });
+  let currentDir = process.cwd();
+  let envPath = path.join(currentDir, '.env');
+  
+  for (let i = 0; i < 5; i++) {
+    if (fs.existsSync(envPath)) {
+      break;
+    }
+    const parentDir = path.dirname(currentDir);
+    if (parentDir === currentDir) {
+      break;
+    }
+    currentDir = parentDir;
+    envPath = path.join(currentDir, '.env');
+  }
+  
+  dotenv.config({ path: envPath });
 }
 
 const envSchema = z.object({

@@ -228,7 +228,13 @@ export function AdminPage() {
             <span>{categoriesQuery.data?.length ?? 0} itens</span>
           </div>
 
-          <form className="stack-form" onSubmit={submitCategory}>
+          <form className="category-form stack-form" onSubmit={submitCategory}>
+            {editingCategoryId && (
+              <div className="edit-mode-banner">
+                <span>Você está editando a categoria: <strong>{categoryName}</strong></span>
+                <button type="button" className="ghost-button" onClick={resetCategoryForm}>Cancelar</button>
+              </div>
+            )}
             <label className="form-field">
               <span>Nome da categoria</span>
               <input placeholder="Camisetas" value={categoryName} onChange={(event) => setCategoryName(event.target.value)} />
@@ -263,6 +269,9 @@ export function AdminPage() {
                     setEditingCategoryId(category.id);
                     setCategoryName(category.name);
                     setCategorySlug(category.slug);
+                    setTimeout(() => {
+                      document.querySelector('.category-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 50);
                   }}>Editar</button>
                   <button type="button" className="ghost-button" onClick={() => deleteCategoryMutation.mutate(category.id)}>Excluir</button>
                 </div>
@@ -304,6 +313,9 @@ export function AdminPage() {
                   <button type="button" className="ghost-button" onClick={() => {
                     setEditingProductId(product.id);
                     setProductForm(toProductFormValues(product));
+                    setTimeout(() => {
+                      document.querySelector('.product-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 50);
                   }}>Editar</button>
                   <button type="button" className="ghost-button" onClick={() => deleteProductMutation.mutate(product.id)}>Desativar</button>
                 </div>

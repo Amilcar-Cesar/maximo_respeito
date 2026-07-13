@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart, useCheckoutCart } from '../hooks/useCart';
+import { FlowStepper } from '../components/FlowStepper';
 
 export function CheckoutPage() {
   const cartQuery = useCart();
@@ -27,8 +28,36 @@ export function CheckoutPage() {
     event.currentTarget.reset();
   };
 
+  if (successMessage) {
+    const orderIdMatch = successMessage.match(/Pedido ([a-f0-9-]+) criado/);
+    const orderId = orderIdMatch ? orderIdMatch[1] : '';
+
+    return (
+      <main className="page-shell">
+        <FlowStepper currentStep="confirmation" />
+        <section className="surface-card confirmation-card">
+          <div className="success-icon">✓</div>
+          <h1>Pedido Confirmado!</h1>
+          <p className="success-subtitle">Obrigado pela sua compra. Seu pedido foi registrado com sucesso.</p>
+          <div className="order-details-box">
+            <p style={{ marginBottom: '12px' }}>
+              <strong>Código do Pedido:</strong> <br />
+              <code style={{ fontSize: '1.1rem', color: 'var(--accent-strong)' }}>{orderId || 'Novo Pedido'}</code>
+            </p>
+            <p>Enviamos os detalhes da confirmação e atualizações de entrega para o seu e-mail cadastrado.</p>
+          </div>
+          <div className="confirmation-actions">
+            <Link className="primary-button" to="/">Voltar para a Home</Link>
+            <Link className="secondary-button" to="/catalogo">Continuar Comprando</Link>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="page-shell">
+      <FlowStepper currentStep="checkout" />
       <section className="surface-card checkout-grid">
         <div>
           <div className="section-heading">

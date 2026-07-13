@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useProduct } from '../hooks/useCatalog';
 import { useAddCartItem } from '../hooks/useCart';
 import { getDisplayImages } from '../utils/product-images';
@@ -10,6 +10,18 @@ export function ProductPage() {
   const addCartItemMutation = useAddCartItem();
   const [selectedVariantId, setSelectedVariantId] = useState('');
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+
+  useEffect(() => {
+    if (addCartItemMutation.isSuccess) {
+      setShowSuccessToast(true);
+      const timer = setTimeout(() => {
+        setShowSuccessToast(false);
+        addCartItemMutation.reset();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [addCartItemMutation.isSuccess, addCartItemMutation]);
 
   const product = productQuery.data;
   const selectedVariant =
@@ -18,7 +30,6 @@ export function ProductPage() {
     () => (product ? getDisplayImages(product.images, selectedVariant?.id) : []),
     [product, selectedVariant?.id]
   );
-  const activeImage = displayImages[selectedImageIndex] ?? displayImages[0] ?? null;
 
   useEffect(() => {
     setSelectedImageIndex(0);
@@ -34,42 +45,67 @@ export function ProductPage() {
 
   return (
     <main className="page-shell">
-      <section className="surface-card product-detail">
-        <div className="product-gallery">
-          <div className="product-hero-image">
-            {activeImage ? (
-              <img src={activeImage.imageUrl} alt={product.name} />
-            ) : (
-              <div className="image-placeholder">Sem imagem</div>
-            )}
-          </div>
-          {displayImages.length > 1 ? (
-            <div className="product-thumbnails">
+      <section className="product-detail">
+        <div className="product-gallery-wrapper">
+          {/* Vertical thumbnails strip */}
+          {displayImages.length > 1 && (
+            <div className="product-gallery-thumbs">
               {displayImages.map((image, index) => (
                 <button
                   key={image.id}
                   type="button"
-                  className={index === selectedImageIndex ? 'product-thumb active' : 'product-thumb'}
-                  onClick={() => setSelectedImageIndex(index)}
+                  className={index === selectedImageIndex ? 'product-gallery-thumb active' : 'product-gallery-thumb'}
+                  onClick={() => {
+                    setSelectedImageIndex(index);
+                    const el = document.getElementById(`product-image-${index}`);
+                    if (el) {
+                      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                  }}
                   aria-label={`Ver imagem ${index + 1}`}
                 >
                   <img src={image.imageUrl} alt={`${product.name} ${index + 1}`} />
                 </button>
               ))}
             </div>
-          ) : null}
+          )}
+
+          {/* Main images area - displaying all images in a grid */}
+          <div className={`product-gallery-main images-count-${displayImages.length}`}>
+            {displayImages.map((image, index) => (
+              <div
+                key={image.id}
+                id={`product-image-${index}`}
+                className={`product-main-image-wrap ${index === selectedImageIndex ? 'active' : ''}`}
+              >
+                <img src={image.imageUrl} alt={`${product.name} ${index + 1}`} />
+              </div>
+            ))}
+            {displayImages.length === 0 && (
+              <div className="image-placeholder">Sem imagem</div>
+            )}
+          </div>
         </div>
 
-        <div className="product-info">
+        {/* Sticky Product Info Sidebar */}
+        <div className="product-info-sidebar">
           <p className="eyebrow">{product.category?.name ?? 'Sem categoria'}</p>
           <h1>{product.name}</h1>
-          <p className="product-price">R$ {Number(product.basePrice).toFixed(2)}</p>
-          <p>{product.description ?? 'Sem descrição cadastrada.'}</p>
+          <div className="product-pricing">
+            <span className="product-price">R$ {Number(product.basePrice).toFixed(2)}</span>
+            <span className="pix-price">ou R$ {(Number(product.basePrice) * 0.95).toFixed(2)} no PIX</span>
+          </div>
+
+          <div className="divider-line" />
+
+          <p className="product-description">{product.description ?? 'Sem descrição cadastrada.'}</p>
+
           {selectedVariant ? (
             <p className="product-selection">
-              Selecionado: {selectedVariant.size} · {selectedVariant.color}
+              Selecionado: <strong>{selectedVariant.size} · {selectedVariant.color}</strong>
             </p>
           ) : null}
+
           <div className="variant-list">
             {product.variants.map((variant) => (
               <button
@@ -82,9 +118,10 @@ export function ProductPage() {
               </button>
             ))}
           </div>
+
           <button
             type="button"
-            className="primary-button"
+            className="primary-button add-to-cart-btn"
             disabled={!selectedVariant || addCartItemMutation.isPending}
             onClick={() => {
               if (selectedVariant) {
@@ -94,8 +131,30 @@ export function ProductPage() {
           >
             {addCartItemMutation.isPending ? 'Adicionando...' : 'Adicionar ao carrinho'}
           </button>
+
+          {showSuccessToast && (
+            <div className="toast-banner">
+              <div>
+                <strong>Adicionado!</strong> Item adicionado à sacola.
+              </div>
+              <div className="toast-actions">
+                <Link className="toast-btn-primary" to="/carrinho">Ver Sacola</Link>
+                <button
+                  type="button"
+                  className="toast-btn-secondary"
+                  onClick={() => {
+                    setShowSuccessToast(false);
+                    addCartItemMutation.reset();
+                  }}
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </section>
     </main>
   );
 }
+
