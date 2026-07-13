@@ -10,9 +10,9 @@ const loginSchema = z.object({
 export class AuthController {
   constructor(private readonly authService = new AuthService()) {}
 
-  login = (request: Request, response: Response) => {
+  login = async (request: Request, response: Response) => {
     const payload = loginSchema.parse(request.body);
-    const session = this.authService.login(payload);
+    const session = await this.authService.login(payload);
     response.json({ data: session });
   };
 }

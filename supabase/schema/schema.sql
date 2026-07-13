@@ -227,6 +227,34 @@ create index if not exists idx_order_items_variant on public.order_items(variant
 
 
 -- =========================================================
+-- 10.5. ADMINISTRADORES
+-- =========================================================
+create table if not exists public.admins (
+  id uuid primary key default gen_random_uuid(),
+  username text not null unique,
+  password_hash text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create trigger trg_admins_updated_at
+before update on public.admins
+for each row execute function set_updated_at();
+
+-- Função para verificar a senha utilizando pgcrypto crypt
+create or replace function public.verify_admin_password(p_username text, p_password text)
+returns table (id uuid, username text) as $$
+begin
+  return query
+  select a.id, a.username
+  from public.admins a
+  where a.username = p_username
+    and a.password_hash = crypt(p_password, a.password_hash);
+end;
+$$ language plpgsql security definer;
+
+
+-- =========================================================
 -- 11. ROW LEVEL SECURITY (RLS)
 -- =========================================================
 -- Como NÃO existe Supabase Auth nesse fluxo (sem login), quem fala com o Supabase
@@ -243,6 +271,7 @@ alter table public.cart_items enable row level security;
 alter table public.customers enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
+alter table public.admins enable row level security;
 
 -- Catálogo: leitura pública liberada (para o front poder listar/filtrar produtos)
 create policy "products_select_public"
@@ -318,3 +347,8 @@ where not exists (
   select 1 from public.product_images pi
   where pi.product_id = p.id and pi.position = v.position
 );
+
+-- Inserir administrador padrão (admin / admin123)
+insert into public.admins (username, password_hash)
+values ('admin', crypt('admin123', gen_salt('bf')))
+on conflict (username) do nothing;

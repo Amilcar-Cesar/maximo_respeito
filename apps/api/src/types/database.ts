@@ -142,3 +142,12 @@ export type OrderWithRelations = OrderRow & {
   customers: CustomerRow;
   order_items: OrderItemRow[];
 };
+
+export interface AdminRow {
+  id: string;
+  username: string;
+  password_hash: string;
+  created_at?: string;
+  updated_at?: string;
+}
+

@@ -1,14 +1,16 @@
-import { env } from '../../config/env.js';
+import { supabase } from '../../config/supabase.js';
 import { AppError } from '../../errors/app-error.js';
 import { createAdminToken } from '../../utils/admin-token.js';
 import type { AdminLoginDTO, AdminSessionDTO } from './auth.types.js';
 
 export class AuthService {
-  login(input: AdminLoginDTO): AdminSessionDTO {
-    const usernameMatch = input.username === env.ADMIN_USERNAME;
-    const passwordMatch = input.password === env.ADMIN_PASSWORD;
+  async login(input: AdminLoginDTO): Promise<AdminSessionDTO> {
+    const { data, error } = await supabase.rpc('verify_admin_password', {
+      p_username: input.username,
+      p_password: input.password
+    });
 
-    if (!usernameMatch || !passwordMatch) {
+    if (error || !data || data.length === 0) {
       throw new AppError('Invalid credentials', 401);
     }
 
@@ -22,3 +24,4 @@ export class AuthService {
     };
   }
 }
+
