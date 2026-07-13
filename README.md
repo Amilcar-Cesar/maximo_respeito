@@ -3,7 +3,7 @@
 Monorepo de e-commerce de roupas com:
 
 - Frontend: Vite + React Router + TanStack Query
-- Backend: Node.js + Express + TypeScript + Supabase JS
+- Backend: Node.js + Express + TypeScript + Supabase JS (Netlify Functions em produção)
 - Banco: Supabase PostgreSQL
 
 ## Requisitos
@@ -19,6 +19,8 @@ npm install
 ```
 
 ## Desenvolvimento
+
+### Local (API + web separados)
 
 Root dev (API + web juntos):
 
@@ -37,6 +39,33 @@ Frontend:
 ```bash
 npm run dev:web
 ```
+
+Use `VITE_API_URL=http://localhost:3333` no `.env` (padrão do `.env.example`).
+
+### Netlify (ambiente igual à produção)
+
+Simula o deploy com functions e redirects:
+
+```bash
+npm run dev:netlify
+```
+
+Abre em `http://localhost:8888`. Deixe `VITE_API_URL` vazio no `.env` para que o frontend chame a API na mesma origem.
+
+## Deploy (Netlify)
+
+1. Conecte o repositório no Netlify.
+2. O `netlify.toml` na raiz já define build, publish e functions.
+3. Configure as variáveis de ambiente no painel do Netlify:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `ADMIN_USERNAME`
+   - `ADMIN_PASSWORD`
+   - `ADMIN_TOKEN_SECRET`
+   - `NODE_ENV=production`
+4. Não defina `VITE_API_URL` — o frontend usa URLs relativas (`/api/...`).
+
+A API Express roda como uma única Netlify Function em `netlify/functions/api.ts`, reutilizando o código de `apps/api`.
 
 ## Verificação
 

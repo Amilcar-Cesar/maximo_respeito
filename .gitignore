@@ -1,9 +1,13 @@
 node_modules
+.netlify
 .env
 .env.*
 !.env.example
 dist
 build
 coverage
+.netlify/functions-*
+netlify/functions/manifest.json
+netlify/functions/*.zip
 .vscode
 .DS_Store

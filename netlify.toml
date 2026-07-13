@@ -1,0 +1,30 @@
+[build]
+  command = "npm run build --workspace @maximo/web"
+  publish = "apps/web/dist"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["@supabase/supabase-js"]
+
+[dev]
+  command = "npm run dev --workspace @maximo/web"
+  targetPort = 5173
+  port = 8888
+  autoLaunch = true
+
+# API — Express via serverless-http
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api"
+  status = 200
+
+[[redirects]]
+  from = "/health"
+  to = "/.netlify/functions/api"
+  status = 200
+
+

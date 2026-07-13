@@ -1,6 +1,7 @@
 {
   "name": "maximo-respeito",
   "private": true,
+  "type": "module",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -9,10 +10,13 @@
     "dev": "concurrently -n api,web -c cyan,magenta \"npm run dev:api\" \"npm run dev:web\"",
     "dev:api": "npm run dev --workspace @maximo/api",
     "dev:web": "npm run dev --workspace @maximo/web",
+    "dev:netlify": "netlify dev --filter @maximo/web",
     "build": "npm run build --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "build:web": "npm run build --workspace @maximo/web",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p netlify/tsconfig.json --noEmit"
   },
   "devDependencies": {
-    "concurrently": "^10.0.3"
+    "concurrently": "^10.0.3",
+    "netlify-cli": "^23.0.0"
   }
 }

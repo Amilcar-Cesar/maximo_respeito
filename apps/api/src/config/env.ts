@@ -3,9 +3,12 @@ import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { z } from 'zod';
 
-const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
+const isNetlifyRuntime = Boolean(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
 
-dotenv.config({ path: path.join(rootDir, '.env') });
+if (!isNetlifyRuntime) {
+  const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
+  dotenv.config({ path: path.join(rootDir, '.env') });
+}
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
