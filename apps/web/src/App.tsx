@@ -22,7 +22,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           <Link to="/catalogo">Catálogo</Link>
           <Link to="/carrinho">Carrinho</Link>
           <Link to="/checkout">Checkout</Link>
-          <Link to="/admin">Admin</Link>
+          <Link to="/admin">Login</Link>
         </nav>
       </header>
       {children}
