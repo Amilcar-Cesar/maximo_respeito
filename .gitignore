@@ -11,3 +11,4 @@ netlify/functions/manifest.json
 netlify/functions/*.zip
 .vscode
 .DS_Store
+supabase/
