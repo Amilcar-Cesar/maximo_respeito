@@ -16,6 +16,7 @@ const cartSelect = `
       id,
       size,
       color,
+      stock,
       products (
         id,
         name,
@@ -226,6 +227,7 @@ export class CartRepository {
         size: variant?.size ?? '',
         color: variant?.color ?? '',
         quantity: item.quantity,
+        stock: variant?.stock ?? 0,
         unitPrice: toPriceString(item.unit_price) ?? '0.00',
         subtotal: subtotal.toFixed(2),
         imageUrl

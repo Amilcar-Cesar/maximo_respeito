@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link, Route, Routes } from 'react-router-dom';
 import { CatalogPage } from './pages/CatalogPage';
 import { CartPage } from './pages/CartPage';
@@ -11,11 +12,25 @@ import { useCart } from './hooks/useCart';
 function Shell({ children }: { children: React.ReactNode }) {
   const { data: cart } = useCart();
   const totalItems = cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMenuOpen]);
+
+  const handleCloseMenu = () => setIsMenuOpen(false);
 
   return (
     <div className="app-shell">
       <header className="topbar">
-        <Link className="brand" to="/">
+        <Link className="brand" to="/" onClick={handleCloseMenu}>
           <span className="brand-mark" />
           <div>
             <strong>Máximo Respeito</strong>
@@ -45,7 +60,54 @@ function Shell({ children }: { children: React.ReactNode }) {
           <Link to="/checkout">Checkout</Link>
           <Link to="/admin">Login</Link>
         </nav>
+
+        {/* Hamburger Menu Button */}
+        <button
+          className={`hamburger-menu ${isMenuOpen ? 'open' : ''}`}
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          aria-label="Menu"
+        >
+          <span className="bar" />
+          <span className="bar" />
+          <span className="bar" />
+        </button>
       </header>
+
+      {/* Drawer Overlay & Content */}
+      <div className={`drawer-overlay ${isMenuOpen ? 'open' : ''}`} onClick={handleCloseMenu}>
+        <div className="drawer-content" onClick={(e) => e.stopPropagation()}>
+          <div className="drawer-header">
+            <span className="drawer-title">Menu</span>
+            <button className="drawer-close-btn" onClick={handleCloseMenu} aria-label="Fechar menu">
+              &times;
+            </button>
+          </div>
+          <nav className="drawer-nav">
+            <a
+              href="/#categorias"
+              onClick={(e) => {
+                handleCloseMenu();
+                if (window.location.pathname === '/') {
+                  e.preventDefault();
+                  const element = document.getElementById('categorias');
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                    window.location.hash = '#categorias';
+                  }
+                }
+              }}
+            >
+              Categorias
+            </a>
+            <Link to="/carrinho" onClick={handleCloseMenu}>
+              Carrinho
+              {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
+            </Link>
+            <Link to="/checkout" onClick={handleCloseMenu}>Checkout</Link>
+            <Link to="/admin" onClick={handleCloseMenu}>Login</Link>
+          </nav>
+        </div>
+      </div>
       {children}
     </div>
   );

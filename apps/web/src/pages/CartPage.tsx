@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
-import { useCart, useRemoveCartItem, useUpdateCartItem } from '../hooks/useCart';
+import { useCart, useRemoveCartItem, useUpdateCartItemDebounced } from '../hooks/useCart';
 import { FlowStepper } from '../components/FlowStepper';
 
 export function CartPage() {
   const cartQuery = useCart();
-  const updateMutation = useUpdateCartItem();
+  const { updateQuantity, cancelUpdate } = useUpdateCartItemDebounced();
   const removeMutation = useRemoveCartItem();
 
   if (cartQuery.isLoading) {
@@ -45,18 +45,27 @@ export function CartPage() {
                   <div className="cart-item-actions">
                     <button
                       type="button"
-                      onClick={() => updateMutation.mutate({ itemId: item.id, quantity: Math.max(1, item.quantity - 1) })}
+                      disabled={item.quantity <= 1}
+                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
                     >
                       -
                     </button>
                     <span>{item.quantity}</span>
                     <button
                       type="button"
-                      onClick={() => updateMutation.mutate({ itemId: item.id, quantity: item.quantity + 1 })}
+                      disabled={item.quantity >= item.stock}
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
                     >
                       +
                     </button>
-                    <button type="button" className="ghost-button" onClick={() => removeMutation.mutate(item.id)}>
+                    <button
+                      type="button"
+                      className="ghost-button"
+                      onClick={() => {
+                        cancelUpdate(item.id);
+                        removeMutation.mutate(item.id);
+                      }}
+                    >
                       Remover
                     </button>
                   </div>

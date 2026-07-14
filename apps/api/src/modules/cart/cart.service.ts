@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { AppError } from '../../errors/app-error.js';
+import { asSingle } from '../../utils/supabase-relations.js';
 import { CartRepository } from './cart.repository.js';
 import type { CartDTO, CheckoutInputDTO, OrderDTO } from './cart.types.js';
 
@@ -40,7 +41,10 @@ export class CartService {
       throw new AppError('Variant not found', 404);
     }
 
-    if (variant.stock < quantity) {
+    const existingItem = resolvedCart.items.find((item) => item.variantId === variantId);
+    const existingQuantity = existingItem ? existingItem.quantity : 0;
+
+    if (variant.stock < existingQuantity + quantity) {
       throw new AppError('Insufficient stock', 400);
     }
 
@@ -71,6 +75,15 @@ export class CartService {
 
     if (!item) {
       throw new AppError('Cart item not found', 404);
+    }
+
+    const variant = asSingle(item.product_variants);
+    if (!variant) {
+      throw new AppError('Variant not found', 404);
+    }
+
+    if (quantity > 0 && quantity > variant.stock) {
+      throw new AppError('Insufficient stock', 400);
     }
 
     if (quantity === 0) {

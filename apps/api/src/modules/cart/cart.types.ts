@@ -9,6 +9,7 @@ export interface CartItemDTO {
   size: string;
   color: string;
   quantity: number;
+  stock: number;
   unitPrice: string;
   subtotal: string;
   imageUrl: string | null;

@@ -7,6 +7,47 @@ export function CheckoutPage() {
   const cartQuery = useCart();
   const checkoutMutation = useCheckoutCart();
   const [successMessage, setSuccessMessage] = useState('');
+  const [cep, setCep] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [loadingCep, setLoadingCep] = useState(false);
+  const [cepError, setCepError] = useState('');
+
+  const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const cleaned = value.replace(/\D/g, '');
+    const truncated = cleaned.slice(0, 8);
+    
+    let masked = truncated;
+    if (truncated.length > 5) {
+      masked = `${truncated.slice(0, 5)}-${truncated.slice(5)}`;
+    }
+    
+    setCep(masked);
+
+    if (truncated.length === 8) {
+      try {
+        setLoadingCep(true);
+        setCepError('');
+        const response = await fetch(`https://viacep.com.br/ws/${truncated}/json/`);
+        if (!response.ok) throw new Error('Erro ao buscar o CEP');
+        const data = await response.json();
+        if (data.erro === true || data.erro === 'true') {
+          setCepError('CEP não encontrado.');
+          return;
+        }
+        setAddress(data.logradouro || '');
+        setCity(data.localidade || '');
+        setState(data.uf || '');
+      } catch (err) {
+        console.error(err);
+        setCepError('Erro ao buscar o CEP.');
+      } finally {
+        setLoadingCep(false);
+      }
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -26,6 +67,10 @@ export function CheckoutPage() {
 
     setSuccessMessage(`Pedido ${order.id} criado com sucesso.`);
     event.currentTarget.reset();
+    setCep('');
+    setAddress('');
+    setCity('');
+    setState('');
   };
 
   if (successMessage) {
@@ -65,7 +110,7 @@ export function CheckoutPage() {
             <span>Pré-cadastro e endereço</span>
           </div>
           <p className="muted-copy">Finalize a compra com os dados do cliente e do endereço de entrega.</p>
-
+          
           <form className="checkout-form" onSubmit={handleSubmit}>
             <div className="form-grid">
               <label>
@@ -84,21 +129,62 @@ export function CheckoutPage() {
                 CPF
                 <input name="cpf" required />
               </label>
+              <label>
+                CEP
+                <div style={{ position: 'relative' }}>
+                  <input
+                    name="shippingPostalCode"
+                    required
+                    value={cep}
+                    onChange={handleCepChange}
+                    placeholder="00000-000"
+                  />
+                  {loadingCep && (
+                    <span style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      fontSize: '0.8rem',
+                      color: 'var(--accent)'
+                    }}>
+                      Buscando...
+                    </span>
+                  )}
+                </div>
+                {cepError && (
+                  <span style={{ fontSize: '0.8rem', color: '#ff4d4d', marginTop: '2px' }}>
+                    {cepError}
+                  </span>
+                )}
+              </label>
               <label className="full-span">
-                Endereço
-                <input name="shippingAddressLine" required />
+                Logradouro e número
+                <input
+                  name="shippingAddressLine"
+                  required
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                />
               </label>
               <label>
                 Cidade
-                <input name="shippingCity" required />
+                <input
+                  name="shippingCity"
+                  required
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                />
               </label>
               <label>
                 Estado
-                <input name="shippingState" required maxLength={2} />
-              </label>
-              <label>
-                CEP
-                <input name="shippingPostalCode" required />
+                <input
+                  name="shippingState"
+                  required
+                  maxLength={2}
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
+                />
               </label>
               <label className="full-span">
                 Pagamento
